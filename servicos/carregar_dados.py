@@ -1,4 +1,5 @@
 
+
 import sys
 from os.path import join, dirname, abspath
 import pandas as pd
@@ -12,6 +13,7 @@ from modelos.loteria import Loteria
 from modelos.totoloto import Totoloto
 from modelos.eurodreams import Eurodreams
 from modelos.euromilhoes import Euromilhoes
+
 
 class FonteDados:
     def __init__(self, caminho_arquivo: str):
@@ -67,4 +69,5 @@ class FonteDados:
     def _normalizar_loteria(self, loteria: str) -> str:
         normalized = loteria.strip().title()
         normalized = normalized.replace('Euromilhao', 'Euromilhões').replace('Euromilhoes', 'Euromilhões')
-        return normalized
+        return normalized 
+

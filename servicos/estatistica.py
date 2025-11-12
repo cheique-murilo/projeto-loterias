@@ -54,3 +54,17 @@ class Estatistica:
                     for pais in s.paises:
                         total_paises[pais] += s.premio
         return dict(total_paises)
+    
+    @staticmethod
+    def streak_max_acumulacoes(loteria: Loteria) -> int:  # <- Novo método
+        if not loteria.sorteios:
+            return 0
+        max_streak = 0
+        current_streak = 0
+        for s in sorted(loteria.sorteios, key=lambda x: x.data):
+            if s.acumulou:
+                current_streak += 1
+                max_streak = max(max_streak, current_streak)
+            else:
+                current_streak = 0
+        return max_streak
