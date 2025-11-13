@@ -14,23 +14,38 @@ sys.path.insert(0, projeto_root)
 class Graficos:
     @staticmethod
     def grafico_evolucao_jackpot(loterias: Dict[str, Loteria], salvar: bool = True):
-        fig, ax = plt.subplots(figsize=(12, 6))
+        fig, ax = plt.subplots(figsize=(12, 6))  # Tamanho maior para visibilidade
         tem_dados = False
         for nome, loteria in loterias.items():
             datas = [s.data for s in loteria.sorteios if s.jackpot]
             valores = [s.jackpot for s in loteria.sorteios if s.jackpot]
             if datas and valores:
-                ax.plot(datas, valores, label=nome, marker='o', linewidth=2)
+                # Ordenar por data para linha contínua
+                df_temp = pd.DataFrame({'data': datas, 'jackpot': valores}).sort_values('data')
+                ax.plot(df_temp['data'], df_temp['jackpot'], label=nome, marker='o', linewidth=2, markersize=6, color='green')
                 tem_dados = True
         if tem_dados:
+            # Eixos com labels e fonts maiores
+            #ax.set_xlabel('Data', fontsize=14, fontweight='bold')
+            #ax.set_ylabel('Jackpot (€)', fontsize=14, fontweight='bold')
+            ax.tick_params(axis='x', rotation=45, labelsize=14)  # Datas rotacionadas e legíveis
+            ax.tick_params(axis='y', labelsize=14)  # Valores no Y visíveis
+            
+            # Formatação do eixo Y com separadores de milhares
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:,.0f}'))
+            
+            # Título maior
+            plt.title('Evolução do Jackpot', fontsize=16, fontweight='bold', pad=20)
+            
             ax.legend()
-            ax.tick_params(axis='x', rotation=45)
+            # Grade sutil para melhor leitura
+            plt.grid(True, alpha=0.3, linestyle='--')
         else:
-            ax.text(0.5, 0.5, 'Sem dados de jackpot', ha='center', va='center')
+            ax.text(0.5, 0.5, 'Sem dados de jackpot', ha='center', va='center', fontsize=14)
         plt.tight_layout()
         if salvar:
             plt.savefig('../jackpot_evolucao.png', dpi=300, bbox_inches='tight')
-        return plt.gcf()  # <- Fix: Retorna fig para st.pyplot
+        return fig  # Retorna fig para st.pyplot (corrigido de plt.gcf())
 
     @staticmethod
     def grafico_ranking_paises(premios_paises: Dict[str, int], salvar: bool = True):
@@ -49,7 +64,7 @@ class Graficos:
         plt.tight_layout()
         if salvar:
             plt.savefig('../ranking_paises.png', dpi=300, bbox_inches='tight')
-        return plt.gcf()  # <- Fix: Retorna fig
+        return fig  # Retorna fig (corrigido)
 
     @staticmethod
     def tabela_jackpots_divididos(dados: Dict[int, int], salvar: bool = True):
@@ -69,4 +84,4 @@ class Graficos:
         plt.tight_layout()
         if salvar:
             plt.savefig('../tabela_divididos.png', dpi=300, bbox_inches='tight')
-        return plt.gcf()  # <- Fix: Retorna fig
+        return fig  # Retorna fig (corrigido)
