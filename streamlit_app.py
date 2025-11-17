@@ -73,18 +73,31 @@ def quadro_sorteios(sorteios_filtrados, nome_loteria):
         st.empty()
         return
     
-    # Helper pra parsear complementares baseado na loteria
+    # Helper pra parsear complementares
     def parse_complementares(comps, loteria_nome):
         nome_lower = loteria_nome.lower()
-        if isinstance(comps, str) and ',' in comps:  # Se string com vírgula (Euromilhões)
+        parsed = []
+        if isinstance(comps, str):
+            if ',' in comps and "euromilhoes" in nome_lower:  # Sem acento: match exato
+                # Split Euromilhões: "2, 5" -> [2, 5]
+                nums = [x.strip() for x in comps.split(',')]
+                parsed = [int(num) for num in nums if num.isdigit() and num != '0']  # Ignora 0 e não-dígitos
+            else:
+                # Pros outros: string única como "3" -> [3]
+                num = comps.strip()
+                if num.isdigit() and num != '0':  # Evita mostrar 0 default
+                    parsed = [int(num)]
+                # Se "0" ou vazio, parsed = [] -> "-"
+        elif isinstance(comps, list):
+            # Se já lista
             if "euromilhoes" in nome_lower:
-                return [int(x.strip()) for x in comps.split(',')]  # Split, strip espaços, int
-        # Pros outros: Pega o primeiro (ou lista se já for)
-        if isinstance(comps, list):
-            return comps[:1] if len(comps) > 1 else comps  # Só o primeiro
-        elif isinstance(comps, str):
-            return [int(comps.strip())] if comps.strip() else []
-        return []
+                parsed = [int(x) for x in comps if isinstance(x, (int, str)) and str(x).isdigit() and str(x) != '0']
+            else:
+                parsed = [int(comps[0])] if comps and isinstance(comps[0], (int, str)) and str(comps[0]).isdigit() and str(comps[0]) != '0' else []
+        
+        # Debug temporário (remove depois de testar):
+        # st.write(f"🔍 Debug {loteria_nome} raw: '{comps}' | Parseado: {parsed}")
+        return parsed if parsed else []
     
     # Título da coluna
     nome_lower = nome_loteria.lower()
@@ -95,13 +108,13 @@ def quadro_sorteios(sorteios_filtrados, nome_loteria):
     else:  # Euromilhões
         col_comp = "Estrelas"
     
-    # Cria o DF com parse dinâmico
+    # Cria o DF
     df_sorteios = pd.DataFrame([
         {
             'Data': s.data.strftime('%d/%m/%Y'),
             'Sorteio': s.sorteio_id,
             'Números Sorteados': ', '.join(map(str, s.numeros_sorteados)),
-            col_comp: ', '.join(map(str, parse_complementares(s.numeros_complementares, nome_loteria))) if parse_complementares(s.numeros_complementares, nome_loteria) else '-',  # Junta a lista parseada
+            col_comp: ', '.join(map(str, parse_complementares(s.numeros_complementares, nome_loteria))) if parse_complementares(s.numeros_complementares, nome_loteria) else '-',  # Junta ou "-"
             'Acumulou': 'Sim' if s.acumulou else 'Não',
             'Jackpot (€)': f"{s.premio:,}" if s.premio else f"{s.jackpot:,}",
             'Países': ', '.join(s.paises) if s.paises else '-',
