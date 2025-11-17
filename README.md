@@ -8,7 +8,7 @@ Projeto em Python para gerar informações estatísticas sobre as loterias de Po
 3. Rode "python streamlit_app.py" para gerar curiosidades estatísticas sobre cada loteria.
 
 ## Web App
-Rode "streamlit run streamlit_app.py" para versão interativa com filtros.
+Rode "streamlit run streamlit_app.py"  para versão interativa com filtros (via web).
 
 ## Estrutura
 - modelos/: classes para Sorteio e Loterias.
