@@ -72,14 +72,36 @@ def quadro_sorteios(sorteios_filtrados, nome_loteria):
     if not sorteios_filtrados:
         st.empty()
         return
-    col_comp = "Número sorte" if "totoloto" in nome_loteria.lower() else "Número sonho" if "eurodreams" in nome_loteria.lower() else "Estrelas"
     
+    # Helper pra parsear complementares baseado na loteria
+    def parse_complementares(comps, loteria_nome):
+        nome_lower = loteria_nome.lower()
+        if isinstance(comps, str) and ',' in comps:  # Se string com vírgula (Euromilhões)
+            if "euromilhoes" in nome_lower:
+                return [int(x.strip()) for x in comps.split(',')]  # Split, strip espaços, int
+        # Pros outros: Pega o primeiro (ou lista se já for)
+        if isinstance(comps, list):
+            return comps[:1] if len(comps) > 1 else comps  # Só o primeiro
+        elif isinstance(comps, str):
+            return [int(comps.strip())] if comps.strip() else []
+        return []
+    
+    # Título da coluna
+    nome_lower = nome_loteria.lower()
+    if "totoloto" in nome_lower:
+        col_comp = "Número sorteado"
+    elif "eurodreams" in nome_lower:
+        col_comp = "Número sonho"
+    else:  # Euromilhões
+        col_comp = "Estrelas"
+    
+    # Cria o DF com parse dinâmico
     df_sorteios = pd.DataFrame([
         {
             'Data': s.data.strftime('%d/%m/%Y'),
             'Sorteio': s.sorteio_id,
             'Números Sorteados': ', '.join(map(str, s.numeros_sorteados)),
-            col_comp: ', '.join(map(str, s.numeros_complementares)) if "euromilhoes" in nome_loteria.lower() else (str(s.numeros_complementares[1]) if s.numeros_complementares else '-'),
+            col_comp: ', '.join(map(str, parse_complementares(s.numeros_complementares, nome_loteria))) if parse_complementares(s.numeros_complementares, nome_loteria) else '-',  # Junta a lista parseada
             'Acumulou': 'Sim' if s.acumulou else 'Não',
             'Jackpot (€)': f"{s.premio:,}" if s.premio else f"{s.jackpot:,}",
             'Países': ', '.join(s.paises) if s.paises else '-',
@@ -87,6 +109,7 @@ def quadro_sorteios(sorteios_filtrados, nome_loteria):
         }
         for s in sorteios_filtrados[-5:]
     ])
+    
     st.subheader("📋 Últimos 5 sorteios")
     st.dataframe(df_sorteios, use_container_width=True, hide_index=True)
 
