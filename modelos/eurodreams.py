@@ -1,16 +1,9 @@
-from .loteria import Loteria
-from servicos.calculos_estatisticos import CalculosEstatisticos
+# modelos/eurodreams.py
+from .loteria_base import LoteriaBase
 
-class Eurodreams(Loteria):
+class Eurodreams(LoteriaBase):
     def __init__(self):
-        super().__init__((1, 40), (1, 5))  # ← Agora aceita
-
-    @property
-    def nome(self) -> str:
-        return "Eurodreams"
-
-    def ranking(self) -> dict:
-        return CalculosEstatisticos(self).calculos_estatisticos()
+        super().__init__("Eurodreams", "Número do Sonho")
 
     
 

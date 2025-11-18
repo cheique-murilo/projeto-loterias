@@ -1,80 +1,29 @@
 # visualizacao/visual_tabelas.py
 import streamlit as st
-import pandas as pd
-from modelos.loteria import Loteria
 
-class VisualTabelas:
-    @staticmethod
-    def _to_dataframe(loteria: Loteria) -> pd.DataFrame:
-        if not loteria.sorteios:
-            return pd.DataFrame()
-        return pd.DataFrame([{
-            'data': s.data.strftime('%d/%m/%Y'),
-            'sorteio_id': s.sorteio_id,
-            'numeros_sorteados': ', '.join(map(str, s.numeros_sorteados)),
-            'numeros_complementares': ', '.join(map(str, s.numeros_complementares)),
-            'acumulou': 'Sim' if s.acumulou else 'Não',
-            'jackpot': s.jackpot or 0,
-            'vencedores': s.vencedores
-        } for s in loteria.sorteios])
+def bola(n: int, estrela: bool = False):
+    cor = "background: linear-gradient(45deg, #4CAF50, #8BC34A); color: white" if estrela else "background: linear-gradient(45deg, #FFD700, #FFA500); color: black"
+    return f'<span style="font-size:2.3rem; font-weight:bold; padding:0.6rem 1.2rem; margin:0.4rem; border-radius:50px; display:inline-block; {cor}">{n}</span>'
 
-    @staticmethod
-    def ultimos_sorteios(loteria: Loteria):
-        df = VisualTabelas._to_dataframe(loteria).tail(5)
-        st.subheader("Últimos 5 sorteios")
-        if df.empty:
-            st.info("Nenhum sorteio carregado.")
+def ultimos_sorteios(loteria):
+    st.subheader("🎯 Últimos 5 Sorteios")
+    for s in loteria.ultimos_5:
+        bolas = " ".join(bola(n) for n in s.principais)
+        
+        # Correção aqui: reconhece o complementar correto
+        if len(s.complementares) == 1 and s.complementares[0] != 0:
+            comp = s.complementares[0]
+            comp_html = bola(comp, estrela=True)
+        elif len(s.complementares) == 2:  # Euromilhões tem 2 estrelas
+            comp_html = " ".join(bola(n, estrela=True) for n in s.complementares)
         else:
-            st.dataframe(df, width='stretch', hide_index=True)
+            comp_html = "-"
 
-    @staticmethod
-    def numeros_mais_menos(stats):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**Números mais saíram**")
-            df = pd.DataFrame(stats['numeros_mais_sairam'], columns=["Número", "Vezes"]) if stats['numeros_mais_sairam'] else pd.DataFrame()
-            if df.empty:
-                st.info("Nenhum dado")
-            else:
-                st.dataframe(df, width='stretch', hide_index=True)
-        with col2:
-            st.markdown("**Números menos saíram**")
-            df = pd.DataFrame(stats['numeros_menos_sairam'], columns=["Número", "Vezes"]) if stats['numeros_menos_sairam'] else pd.DataFrame()
-            if df.empty:
-                st.info("Nenhum dado")
-            else:
-                st.dataframe(df, width='stretch', hide_index=True)
-
-    @staticmethod
-    def combinacoes_repetidas(stats):
-        st.subheader("Sequências Mais Comuns")
-        tab1, tab2, tab3 = st.tabs(["Duplas", "Trios", "Quadras"])
-        with tab1:
-            df = pd.DataFrame(stats['duplas_repetidas'], columns=["Dupla", "Vezes"]) if stats['duplas_repetidas'] else pd.DataFrame()
-            if df.empty:
-                st.info("Nenhuma")
-            else:
-                st.dataframe(df, width='stretch', hide_index=True)
-        with tab2:
-            df = pd.DataFrame(stats['trios_repetidos'], columns=["Trio", "Vezes"]) if stats['trios_repetidos'] else pd.DataFrame()
-            if df.empty:
-                st.info("Nenhuma")
-            else:
-                st.dataframe(df, width='stretch', hide_index=True)
-        with tab3:
-            df = pd.DataFrame(stats['quadras_repetidas'], columns=["Quadra", "Vezes"]) if stats['quadras_repetidas'] else pd.DataFrame()
-            if df.empty:
-                st.info("Nenhuma")
-            else:
-                st.dataframe(df, width='stretch', hide_index=True)
-
-    @staticmethod
-    def sequencias_consecutivas(stats):
-        st.subheader("🔢 Sequências Consecutivas")
-        seq = stats['sequencias_consecutivas']
-        if seq['contagem_total'] > 0:
-            st.metric("Total encontradas", seq['contagem_total'])
-            df = pd.DataFrame(seq['sorteios_com_sequencia'], columns=["Sorteio", "Sequência"])
-            st.dataframe(df, width='stretch', hide_index=True)
-        else:
-            st.info("Nenhuma sequência consecutiva encontrada.")
+        st.markdown(f"""
+        <div style="background:#1e1e1e; color:white; padding:2rem; border-radius:20px; text-align:center; margin:1rem 0;">
+            <h3>{s.data.strftime('%d/%m/%Y')} • Concurso {s.concurso}</h3>
+            {bolas}<br><br>
+            <b>{loteria.label_complementar}:</b> {comp_html}
+            {' ➜ <span style="color:#FF4444; font-size:1.8rem;">ACUMULOU!</span>' if s.acumulou else ''}
+        </div>
+        """, unsafe_allow_html=True)
