@@ -27,13 +27,13 @@ def img64(p):
 loterias = carregar_todas_loterias()
 
 if "lot" not in st.session_state:
-    logo = img64("imagens/jogossantacasa.png")
+    logo = img64("imagens/jogossantacasa.PNG")
     if logo:
         st.image(f"data:image/png;base64,{logo}", width=150)
     st.markdown("<h1 class='titulo'>Loterias de Portugal</h1>", unsafe_allow_html=True)
 
     cols = st.columns(3)
-    for col, (nome, img) in zip(cols, [("Totoloto","totoloto.png"), ("Eurodreams","eurodreams.png"), ("Euromilhões","euromilhoes.png")]):
+    for col, (nome, img) in zip(cols, [("Totoloto","totoloto.PNG"), ("Eurodreams","eurodreams.PNG"), ("Euromilhões","euromilhoes.PNG")]):
         with col:
             b64 = img64(f"imagens/{img}")
             total = loterias[nome].total_sorteios
