@@ -1,29 +1,26 @@
-# visualizacao/visual_tabelas.py
-import streamlit as st
+# visualizacao/visual_tabelas.py (FINAL - Apenas dados)
 
-def bola(n: int, estrela: bool = False):
-    cor = "background: linear-gradient(45deg, #4CAF50, #8BC34A); color: white" if estrela else "background: linear-gradient(45deg, #FFD700, #FFA500); color: black"
-    return f'<span style="font-size:2.3rem; font-weight:bold; padding:0.6rem 1.2rem; margin:0.4rem; border-radius:50px; display:inline-block; {cor}">{n}</span>'
+from typing import List
 
-def ultimos_sorteios(loteria):
-    st.subheader("🎯 Últimos 5 Sorteios")
-    for s in loteria.ultimos_5:
-        bolas = " ".join(bola(n) for n in s.principais)
+def obter_dados_ultimos_sorteios(loteria) -> List[dict]:
+    """
+    Prepara os dados dos últimos 5 sorteios para renderização,
+    retornando uma lista de dicionários.
+    """
+    ultimos = loteria.sorteios[-5:] 
+
+    dados_formatados = []
+    for s in ultimos:
+        dados_formatados.append({
+            "data": s.data, 
+            "data_str": s.data.strftime('%d/%m/%Y'),
+            "concurso": s.concurso,
+            "principais": s.principais,
+            "complementares": s.complementares,
+            "acumulou": s.acumulou,
+            "label_complementar": loteria.label_complementar,
+            "nome_loteria": loteria.nome
+        })
         
-        # Correção aqui: reconhece o complementar correto
-        if len(s.complementares) == 1 and s.complementares[0] != 0:
-            comp = s.complementares[0]
-            comp_html = bola(comp, estrela=True)
-        elif len(s.complementares) == 2:  # Euromilhões tem 2 estrelas
-            comp_html = " ".join(bola(n, estrela=True) for n in s.complementares)
-        else:
-            comp_html = "-"
-
-        st.markdown(f"""
-        <div style="background:#1e1e1e; color:white; padding:2rem; border-radius:20px; text-align:center; margin:1rem 0;">
-            <h3>{s.data.strftime('%d/%m/%Y')} • Concurso {s.concurso}</h3>
-            {bolas}<br><br>
-            <b>{loteria.label_complementar}:</b> {comp_html}
-            {' ➜ <span style="color:#FF4444; font-size:1.8rem;">ACUMULOU!</span>' if s.acumulou else ''}
-        </div>
-        """, unsafe_allow_html=True)
+    return list(reversed(dados_formatados))
+# A função 'bola' e o código Streamlit/HTML foram removidos.

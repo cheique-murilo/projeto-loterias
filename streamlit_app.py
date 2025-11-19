@@ -1,94 +1,287 @@
-# streamlit_app.py
+# streamlit_app.py - VERSÃO FINAL COMPLETA
 import streamlit as st
 import base64
 import os
-from servicos.carregar_dados import carregar_todas_loterias
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# --- IMPORTAÇÕES DOS SERVIÇOS REFATORADOS ---
+# Certifique-se de que os arquivos __init__.py existem nas pastas, mesmo que vazios
+from servicos.validador import carregar_e_processar_loterias
 from servicos.calculos_estatisticos import CalculosEstatisticos
-from visualizacao.visual_tabelas import ultimos_sorteios, bola
-from visualizacao.visual_graficos import evolucao_jackpot, ranking_premios_pais
-from typing import Dict
+from servicos.filtros import filtrar_por_data
+from visualizacao.visual_tabelas import obter_dados_ultimos_sorteios
+from visualizacao.visual_graficos import preparar_dados_evolucao_jackpot
 
-st.set_page_config(page_title="Loterias PT", page_icon="🎰", layout="wide")
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(
+    page_title="Loterias de Portugal",
+    page_icon="🎰",
+    layout="wide"
+)
 
+# --- ESTILOS CSS PERSONALIZADOS ---
 st.markdown("""
 <style>
-    .titulo {font-size:5.5rem; font-weight:900; background:linear-gradient(90deg,#00BFFF,#1E90FF);
-             -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center;}
-    .card {background:linear-gradient(135deg,#667eea,#764ba2); border-radius:25px; padding:3rem;
-           text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.4); transition:all 0.4s; color:white;}
-    .card:hover {transform:translateY(-20px);}
-    .metric {background:#f0f2f6; padding:2rem; border-radius:20px; text-align:center;}
+    /* Estilo dos Cards da Tela Inicial */
+    .card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .card h2 { margin-bottom: 0; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .card p { font-size: 1.2rem; opacity: 0.9; }
+
+    /* Estilo das Bolas */
+    .bola-base {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.8rem;
+        height: 2.8rem;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin: 0.2rem;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Container de Sorteio */
+    .sorteio-box {
+        background-color: #262730;
+        padding: 1.5rem;
+        border-radius: 15px;
+        border: 1px solid #404040;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .sorteio-data { font-size: 0.9rem; color: #aaa; margin-bottom: 0.5rem; }
+    .acumulou-tag { 
+        display: inline-block; 
+        background: #ff4b4b; 
+        color: white; 
+        padding: 2px 8px; 
+        border-radius: 4px; 
+        font-size: 0.8rem; 
+        font-weight: bold;
+        margin-left: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-def img64(p):
-    return base64.b64encode(open(p, "rb").read()).decode() if os.path.exists(p) else None
+# --- FUNÇÕES AUXILIARES VISUAIS ---
+def bola(n: int, tipo: str = "PRINCIPAL") -> str:
+    """Gera o HTML para uma bola de loteria."""
+    if tipo == "PRINCIPAL":
+        estilo = "background: linear-gradient(145deg, #FFD700, #FFA500); color: #000;"
+    elif tipo == "COMPLEMENTAR": # Estrelas (Euromilhões)
+        estilo = "background: linear-gradient(145deg, #4CAF50, #2E8B57); color: #fff;"
+    else: # Chave/Sonho (Totoloto/Eurodreams)
+        estilo = "background: linear-gradient(145deg, #00BFFF, #1E90FF); color: #fff;"
+        
+    return f'<span class="bola-base" style="{estilo}">{n}</span>'
 
-loterias = carregar_todas_loterias()
+def img64(path):
+    """Converte imagem para base64 de forma segura."""
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return None
 
+# --- CARREGAMENTO DE DADOS ---
+st.header("🎰 Análise de Loterias")
+
+try:
+    with st.spinner("Carregando e validando base de dados..."):
+        loterias = carregar_e_processar_loterias()
+except Exception as e:
+    st.error("❌ Erro crítico ao iniciar o sistema.")
+    st.exception(e)
+    st.stop()
+
+# Verifica se temos dados
+total_geral = sum(l.total_sorteios for l in loterias.values())
+if total_geral == 0:
+    st.warning("⚠️ O sistema carregou, mas nenhum sorteio foi validado.")
+    st.info("Verifique se o arquivo 'dados_loterias.xlsx' contém dados e se as colunas estão nomeadas corretamente.")
+    st.stop()
+
+# --- NAVEGAÇÃO ---
 if "lot" not in st.session_state:
-    logo = img64("imagens/jogossantacasa.png")
-    if logo:
-        st.image(f"data:image/png;base64,{logo}", width=150)
-    st.markdown("<h1 class='titulo'>Loterias de Portugal</h1>", unsafe_allow_html=True)
-
+    # TELA INICIAL (DASHBOARD GERAL)
+    st.markdown("### Escolha uma Loteria")
+    
     cols = st.columns(3)
-    for col, (nome, img) in zip(cols, [("Totoloto","totoloto.png"), ("Eurodreams","eurodreams.png"), ("Euromilhões","euromilhoes.png")]):
+    opcoes = [
+        ("Totoloto", "totoloto.png"), 
+        ("Eurodreams", "eurodreams.png"), 
+        ("Euromilhões", "euromilhoes.png")
+    ]
+    
+    for col, (nome, img_file) in zip(cols, opcoes):
+        loto = loterias.get(nome)
+        if not loto: continue
+        
         with col:
-            b64 = img64(f"imagens/{img}")
-            total = loterias[nome].total_sorteios
+            # Card Visual
+            img_code = img64(f"imagens/{img_file}")
+            img_html = f'<img src="data:image/png;base64,{img_code}" style="height:100px; margin-bottom:10px;">' if img_code else ""
+            
             st.markdown(f"""
             <div class="card">
-                <h2>🍀 {nome}</h2>
-                {f'<img src="data:image/png;base64,{b64}">' if b64 else ''}
-                <p style="font-size:1.6rem;"><b>{total} sorteios</b></p>
+                {img_html}
+                <h2>{nome}</h2>
+                <p>{loto.total_sorteios} Sorteios carregados</p>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Abrir {nome}", key=nome):
+            
+            if st.button(f"Abrir Análise {nome}", key=f"btn_{nome}", use_container_width=True):
                 st.session_state.lot = nome
                 st.rerun()
+
 else:
-    lot = loterias[st.session_state.lot]
-    calc = CalculosEstatisticos(lot.sorteios).todos()
+    # TELA DE DETALHES DA LOTERIA
+    nome_lot = st.session_state.lot
+    loto_original = loterias.get(nome_lot)
 
-    st.markdown(f"<h1 style='text-align:center; color:#FFD700;'>🍀 {lot.nome}</h1>", unsafe_allow_html=True)
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Sorteios", calc['total'])
-    c2.metric("Acumulações", calc['acumulacoes'])
-    c3.metric("Streak Máximo", calc['streak'])
-    c4.metric("Maior Jackpot", f"€{calc['maior_jackpot']:,}")
-
-    evolucao_jackpot(lot)
-    ultimos_sorteios(lot)
-
-    st.markdown("### Ranking de Prémios Ganhos por País")
-    premios_pais = {}
-    for s in lot.sorteios:
-        if not s.acumulou and s.jackpot > 0 and hasattr(s, 'paises_ganhadores'):
-            for pais in str(s.paises_ganhadores).split(','):
-                pais = pais.strip()
-                if pais and pais != "nan":
-                    premios_pais[pais] = premios_pais.get(pais, 0) + 1
-
-    ranking_premios_pais(premios_pais)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Mais Sorteados")
-        for n, q in calc['mais_princ'][:5]:
-            st.markdown(f"{bola(n)} → **{q}x**", unsafe_allow_html=True)
-    with col2:
-        st.subheader("Duplas Quentes")
-        for combo, q in calc['duplas']:
-            b = " ".join(bola(n) for n in combo)
-            st.markdown(f"{b} → **{q}x**", unsafe_allow_html=True)
-
-    if calc['sequencias']:
-        st.subheader("Sequências Consecutivas")
-        for seq in calc['sequencias']:
-            st.write(f"• {seq}")
-
-    if st.button("← Voltar"):
+    # Botão Voltar no topo
+    if st.button("← Voltar ao Menu Principal"):
         del st.session_state.lot
         st.rerun()
+
+    # --- BARRA LATERAL (FILTROS) ---
+    st.sidebar.header(f"Filtros: {nome_lot}")
+    
+    if loto_original.total_sorteios > 0:
+        min_date = min(s.data for s in loto_original.sorteios).date()
+        max_date = max(s.data for s in loto_original.sorteios).date()
+        
+        d_inicio = st.sidebar.date_input("Data Inicial", min_date, min_value=min_date, max_value=max_date)
+        d_fim = st.sidebar.date_input("Data Final", max_date, min_value=min_date, max_value=max_date)
+        
+        # Aplica filtro
+        loto = filtrar_por_data(loto_original, d_inicio, d_fim)
+    else:
+        st.error("Sem dados para filtrar.")
+        st.stop()
+
+    # --- CÁLCULOS ESTATÍSTICOS ---
+    # Instancia a classe de cálculos com os dados filtrados
+    calc_sys = CalculosEstatisticos(loto.sorteios)
+    stats = calc_sys.todos()
+
+    st.markdown(f"# 🍀 Análise: {nome_lot}")
+    
+    # 1. MÉTRICAS PRINCIPAIS
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Sorteios no Período", stats.get('total_sorteios', 0))
+    k2.metric("Total Acumulações", stats.get('total_acumulacoes', 0))
+    k3.metric("Maior Seq. Acumulada", f"{stats.get('max_streak_acumulacoes', 0)} vezes")
+    k4.metric("Maior Jackpot", f"€ {stats.get('maior_jackpot', 0):,}")
+    
+    st.divider()
+
+    # 2. GRÁFICOS E RANKING
+    c_graf, c_rank = st.columns([2, 1])
+    
+    with c_graf:
+        st.subheader("📈 Evolução do Jackpot")
+        df_jackpot = preparar_dados_evolucao_jackpot(loto)
+        if df_jackpot is not None and not df_jackpot.empty:
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.plot(df_jackpot['data'], df_jackpot['jackpot_milhoes'], color='#FF4B4B', linewidth=2, marker='o', markersize=4)
+            ax.set_ylabel("Milhões (€)")
+            ax.grid(True, alpha=0.3)
+            st.pyplot(fig)
+        else:
+            st.info("Sem dados de jackpot para exibir neste período.")
+
+    with c_rank:
+        st.subheader("🌍 Top Países")
+        premios = stats.get('premios_por_pais', {})
+        if premios:
+            df_paises = pd.DataFrame(list(premios.items()), columns=['País', 'Qtd']).sort_values('Qtd', ascending=True)
+            st.dataframe(
+                df_paises, 
+                column_config={"Qtd": st.column_config.ProgressColumn("Vezes", format="%d", min_value=0, max_value=int(df_paises['Qtd'].max()))},
+                hide_index=True,
+                use_container_width=True
+            )
+        else:
+            st.info("Sem dados de países.")
+
+    st.divider()
+
+    # 3. ÚLTIMOS SORTEIOS (Visual)
+    st.subheader("📅 Últimos Resultados")
+    dados_visuais = obter_dados_ultimos_sorteios(loto)
+    
+    for d in dados_visuais:
+        # Gera HTML das bolas
+        html_princ = "".join([bola(n, "PRINCIPAL") for n in d['principais']])
+        
+        # Define tipo da complementar baseada na loteria
+        tipo_comp = "COMPLEMENTAR" if nome_lot == "Euromilhões" else "UNICO"
+        html_comp = "".join([bola(n, tipo_comp) for n in d['complementares']])
+        
+        tag_acumulou = '<span class="acumulou-tag">ACUMULOU!</span>' if d['acumulou'] else ""
+        
+        st.markdown(f"""
+        <div class="sorteio-box">
+            <div class="sorteio-data">{d['data_str']} • Concurso <b>{d['concurso']}</b> {tag_acumulou}</div>
+            <div>{html_princ} <span style="margin:0 15px; color:#aaa;">|</span> {html_comp}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # 4. ESTATÍSTICAS DETALHADAS (Abas)
+    tab1, tab2, tab3 = st.tabs(["🔢 Frequência de Números", "🔥 Combinações", "🔗 Sequências"])
+    
+    with tab1:
+        c_mais, c_menos = st.columns(2)
+        with c_mais:
+            st.write("#### Mais Sorteados")
+            for n, qtd in stats.get('mais_frequentes_princ', [])[:5]:
+                st.markdown(f"{bola(n)} sai **{qtd}** vezes", unsafe_allow_html=True)
+        with c_menos:
+            st.write("#### Menos Sorteados")
+            for n, qtd in stats.get('menos_frequentes_princ', [])[:5]:
+                st.markdown(f"{bola(n)} sai **{qtd}** vezes", unsafe_allow_html=True)
+
+    with tab2:
+        tipo = st.radio("Tipo de Combinação", ["Duplas", "Trios"], horizontal=True)
+        chave = 'duplas_repetidas' if tipo == "Duplas" else 'trios_repetidos'
+        
+        combos = stats.get(chave, [])
+        if combos:
+            st.write(f"#### {tipo} que mais se repetem")
+            for c_nums, qtd in combos[:5]: # Top 5
+                html_combo = "".join([bola(n) for n in c_nums])
+                st.markdown(f"{html_combo} → **{qtd}x**", unsafe_allow_html=True)
+        else:
+            st.info(f"Nenhuma repetição de {tipo} encontrada neste período.")
+
+    with tab3:
+        seqs = stats.get('sequencias_consecutivas', [])
+        if seqs:
+            st.write("#### Sequências (ex: 1, 2, 3)")
+            for s in seqs:
+                # O formato vem do calculos_estatisticos: "Data | Concurso | 1 - 2 - 3"
+                if "|" in s:
+                    info, nums_str = s.rsplit("|", 1)
+                    nums = [int(x) for x in nums_str.replace("-", " ").split() if x.isdigit()]
+                    html_seq = "".join([bola(n) for n in nums])
+                    st.markdown(f"<small>{info}</small><br>{html_seq}", unsafe_allow_html=True)
+                else:
+                    st.write(s)
+        else:
+            st.info("Nenhuma sequência consecutiva relevante encontrada.")
