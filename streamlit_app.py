@@ -4,6 +4,7 @@ import base64
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 # --- IMPORTAÇÕES DOS SERVIÇOS REFATORADOS ---
 # Certifique-se de que os arquivos __init__.py existem nas pastas, mesmo que vazios
@@ -97,7 +98,20 @@ def img64(path):
     return None
 
 # --- CARREGAMENTO DE DADOS ---
-st.header("🎰 Análise de Loterias")
+
+    # --- 🖼️ HEADER COM LOGO JOGOS SANTA CASA ---
+col_logo= st.columns(1) 
+c_logo = st.container()
+with c_logo:
+    col_esq, col_meio, col_dir = st.columns([1, 1, 1])
+    with col_meio:
+            # Centraliza usando colunas
+            if os.path.exists("imagens/jogossantacasa.png"):
+                st.image("imagens/jogossantacasa.png", width=250)
+
+st.header("📈 Análise das loterias de Portugal")
+
+st.divider() # Uma linha separadora elegante
 
 try:
     with st.spinner("Carregando e validando base de dados..."):
@@ -116,8 +130,9 @@ if total_geral == 0:
 
 # --- NAVEGAÇÃO ---
 if "lot" not in st.session_state:
-    # TELA INICIAL (DASHBOARD GERAL)
-    st.markdown("### Escolha uma Loteria")
+    # TELA INICIAL (DASHBOARD GERAL)      
+    
+    st.markdown("### Escolha uma loteria para analisar")
     
     cols = st.columns(3)
     opcoes = [
@@ -143,7 +158,7 @@ if "lot" not in st.session_state:
             </div>
             """, unsafe_allow_html=True)
             
-            if st.button(f"Abrir Análise {nome}", key=f"btn_{nome}", use_container_width=True):
+            if st.button(f"Abrir análise {nome}", key=f"btn_{nome}", use_container_width=True):
                 st.session_state.lot = nome
                 st.rerun()
 
@@ -194,12 +209,43 @@ else:
     
     with c_graf:
         st.subheader("📈 Evolução do Jackpot")
+        
+        # Gera os dados baseados no lote já filtrado (loto)
         df_jackpot = preparar_dados_evolucao_jackpot(loto)
+        
         if df_jackpot is not None and not df_jackpot.empty:
             fig, ax = plt.subplots(figsize=(10, 5))
-            ax.plot(df_jackpot['data'], df_jackpot['jackpot_milhoes'], color='#FF4B4B', linewidth=2, marker='o', markersize=4)
+            
+            # Plotagem dos dados
+            ax.plot(df_jackpot['data'], df_jackpot['jackpot_milhoes'], 
+                   color='#FF4B4B', linewidth=2, marker='o', markersize=5)
+            
+            # --- AJUSTES DO EIXO X (DATAS) ---
+            
+            # 1. Definir limites exatos baseados no Filtro da Sidebar
+            # (Converte para datetime para o matplotlib entender)
+            ax.set_xlim(pd.to_datetime(d_inicio), pd.to_datetime(d_fim))
+            
+            # 2. Formatação da Data (Dia/Mês/Ano curto)
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m/%y'))
+            
+            # 3. Lógica para mostrar datas
+            # Se tivermos poucos dados (menos de 30), forçamos mostrar TODAS as datas dos sorteios
+            if len(df_jackpot) < 30:
+                ax.set_xticks(df_jackpot['data'])
+            else:
+                # Se forem muitos, deixa automático mas garante que não sobrepõe
+                ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+
+            # 4. Rotação de 45º e alinhamento à direita (para ficar embaixo do tracinho)
+            plt.xticks(rotation=45, ha='right')
+            
+            # --- ESTÉTICA GERAL ---
             ax.set_ylabel("Milhões (€)")
+            ax.set_title(f"Período: {d_inicio.strftime('%d/%m/%Y')} a {d_fim.strftime('%d/%m/%Y')}", fontsize=10, color='gray')
             ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
             st.pyplot(fig)
         else:
             st.info("Sem dados de jackpot para exibir neste período.")
@@ -258,13 +304,23 @@ else:
                 st.markdown(f"{bola(n)} sai **{qtd}** vezes", unsafe_allow_html=True)
 
     with tab2:
-        tipo = st.radio("Tipo de Combinação", ["Duplas", "Trios"], horizontal=True)
-        chave = 'duplas_repetidas' if tipo == "Duplas" else 'trios_repetidos'
+        # 1. Adicionada a opção "Quadras" na lista
+        tipo = st.radio("Tipo de Combinação", ["Duplas", "Trios", "Quadras"], horizontal=True)
+        
+        # 2. Mapeamento da escolha para a chave de dados correta
+        mapa_chaves = {
+            "Duplas": "duplas_repetidas",
+            "Trios": "trios_repetidos",
+            "Quadras": "quadras_repetidas"
+        }
+        chave = mapa_chaves[tipo]
         
         combos = stats.get(chave, [])
+        
         if combos:
             st.write(f"#### {tipo} que mais se repetem")
-            for c_nums, qtd in combos[:5]: # Top 5
+            # Mostra o Top 5
+            for c_nums, qtd in combos[:5]: 
                 html_combo = "".join([bola(n) for n in c_nums])
                 st.markdown(f"{html_combo} → **{qtd}x**", unsafe_allow_html=True)
         else:
