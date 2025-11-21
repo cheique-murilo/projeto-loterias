@@ -168,7 +168,7 @@ else:
     loto_original = loterias.get(nome_lot)
 
     # Botão Voltar no topo
-    if st.button("← Voltar ao Menu Principal"):
+    if st.button("← Voltar ao menu principal"):
         del st.session_state.lot
         st.rerun()
 
@@ -197,10 +197,10 @@ else:
     
     # 1. MÉTRICAS PRINCIPAIS
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Sorteios no Período", stats.get('total_sorteios', 0))
-    k2.metric("Total Acumulações", stats.get('total_acumulacoes', 0))
-    k3.metric("Maior Seq. Acumulada", f"{stats.get('max_streak_acumulacoes', 0)} vezes")
-    k4.metric("Maior Jackpot", f"€ {stats.get('maior_jackpot', 0):,}")
+    k1.metric("Sorteios no período", stats.get('total_sorteios', 0))
+    k2.metric("Total acumulações", stats.get('total_acumulacoes', 0))
+    k3.metric("Maior sequência acumulada", f"{stats.get('max_streak_acumulacoes', 0)} vezes")
+    k4.metric("Maior jackpot", f"€ {stats.get('maior_jackpot', 0):,}")
     
     st.divider()
 
@@ -208,7 +208,7 @@ else:
     c_graf, c_rank = st.columns([2, 1])
     
     with c_graf:
-        st.subheader("📈 Evolução do Jackpot")
+        st.subheader("📈 Evolução do jackpot")
         
         # Gera os dados baseados no lote já filtrado (loto)
         df_jackpot = preparar_dados_evolucao_jackpot(loto)
@@ -251,7 +251,7 @@ else:
             st.info("Sem dados de jackpot para exibir neste período.")
 
     with c_rank:
-        st.subheader("🌍 Top Países")
+        st.subheader("🌍 Top premiação por país")
         premios = stats.get('premios_por_pais', {})
         if premios:
             df_paises = pd.DataFrame(list(premios.items()), columns=['País', 'Qtd']).sort_values('Qtd', ascending=True)
@@ -267,7 +267,7 @@ else:
     st.divider()
 
     # 3. ÚLTIMOS SORTEIOS (Visual)
-    st.subheader("📅 Últimos Resultados")
+    st.subheader("📅 Últimos resultados")
     dados_visuais = obter_dados_ultimos_sorteios(loto)
     
     for d in dados_visuais:
@@ -290,22 +290,22 @@ else:
     st.divider()
 
     # 4. ESTATÍSTICAS DETALHADAS (Abas)
-    tab1, tab2, tab3 = st.tabs(["🔢 Frequência de Números", "🔥 Combinações", "🔗 Sequências"])
+    tab1, tab2, tab3 = st.tabs(["🔢 Frequência de números", "🔥 Combinações", "🔗 Sequências"])
     
     with tab1:
         c_mais, c_menos = st.columns(2)
         with c_mais:
-            st.write("#### Mais Sorteados")
+            st.write("#### Mais sorteados")
             for n, qtd in stats.get('mais_frequentes_princ', [])[:5]:
-                st.markdown(f"{bola(n)} sai **{qtd}** vezes", unsafe_allow_html=True)
+                st.markdown(f"{bola(n)} saiu **{qtd}** vezes", unsafe_allow_html=True)
         with c_menos:
-            st.write("#### Menos Sorteados")
+            st.write("#### Menos sorteados")
             for n, qtd in stats.get('menos_frequentes_princ', [])[:5]:
-                st.markdown(f"{bola(n)} sai **{qtd}** vezes", unsafe_allow_html=True)
+                st.markdown(f"{bola(n)} saiu **{qtd}** vezes", unsafe_allow_html=True)
 
     with tab2:
         # 1. Adicionada a opção "Quadras" na lista
-        tipo = st.radio("Tipo de Combinação", ["Duplas", "Trios", "Quadras"], horizontal=True)
+        tipo = st.radio("Tipo de combinação", ["Duplas", "Trios", "Quadras"], horizontal=True)
         
         # 2. Mapeamento da escolha para a chave de dados correta
         mapa_chaves = {
