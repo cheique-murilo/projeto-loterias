@@ -106,8 +106,8 @@ with c_logo:
     col_esq, col_meio, col_dir = st.columns([1, 1, 1])
     with col_meio:
             # Centraliza usando colunas
-            if os.path.exists("imagens/jogossantacasa.png"):
-                st.image("imagens/jogossantacasa.png", width=250)
+            if os.path.exists("imagens/jogossantacasa.PNG"):
+                st.image("imagens/jogossantacasa.PNG", width=250)
 
 st.header("📈 Análise das loterias de Portugal")
 
@@ -136,9 +136,9 @@ if "lot" not in st.session_state:
     
     cols = st.columns(3)
     opcoes = [
-        ("Totoloto", "totoloto.png"), 
-        ("Eurodreams", "eurodreams.png"), 
-        ("Euromilhões", "euromilhoes.png")
+        ("Totoloto", "totoloto.PNG"), 
+        ("Eurodreams", "eurodreams.PNG"), 
+        ("Euromilhões", "euromilhoes.PNG")
     ]
     
     for col, (nome, img_file) in zip(cols, opcoes):
