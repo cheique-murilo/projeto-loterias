@@ -1,86 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍀 Análise das loterias de Portugal</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .badges {
-            margin: 20px 0;
-        }
-        .badges img {
-            margin: 0 10px;
-            height: 25px;
-        }
-        .demo-btn {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 18px;
-            margin: 20px 0;
-            transition: background-color 0.3s;
-        }
-        .demo-btn:hover {
-            background-color: #45a049;
-        }
-        footer {
-            margin-top: 40px;
-            font-size: 14px;
-            color: #666;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🍀 Análise das loterias de Portugal</h1>
-        
-        <div class="badges">
-            <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" alt="Python">
-            <img src="https://img.shields.io/badge/Streamlit-1.0%2B-orange?logo=streamlit&logoColor=white" alt="Streamlit">
-            <img src="https://img.shields.io/badge/Deployed%20on-Streamlit-brightgreen?logo=streamlit&logoColor=white" alt="Streamlit">
-        </div>
-        
-        <p>Um dashboard interativo desenvolvido em Python e Streamlit para análise estatística, visualização de tendências e histórico de sorteios das principais loterias de Portugal: Euromilhões, Totoloto e Eurodreams.</p>
-        
-        <h2>🚀 Acesse o Dashboard</h2>
-        <a href="https://projeto-loterias.streamlit.app/" class="demo-btn" target="_blank">Abrir Análise! 📊</a>
-        
-        <footer>
-            <p>⭐ Curtiu? Dê uma estrela no GitHub!</p>
-            <p>#LoteriasPortugal #DataViz #Python</p>
-        </footer>
-    </div>
-</body>
-</html>
-
 # 🍀 Análise das loterias de Portugal
 
 Um dashboard interativo desenvolvido em **Python** e **Streamlit** para análise estatística, visualização de tendências e histórico de sorteios das principais loterias de Portugal: **Euromilhões**, **Totoloto** e **Eurodreams**.
 
-        <div class="badges">
-            <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" alt="Python">
-            <img src="https://img.shields.io/badge/Streamlit-1.0%2B-orange?logo=streamlit&logoColor=white" alt="Streamlit">
-            <img src="https://img.shields.io/badge/Deployed%20on-Streamlit-brightgreen?logo=streamlit&logoColor=white" alt="Streamlit">
-        </div>
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-Online-brightgreen)
 
 ## 📊 Funcionalidades
 
