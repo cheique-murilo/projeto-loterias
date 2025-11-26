@@ -2,7 +2,11 @@
 
 Um dashboard interativo desenvolvido em **Python** e **Streamlit** para análise estatística, visualização de tendências e histórico de sorteios das principais loterias de Portugal: **Euromilhões**, **Totoloto** e **Eurodreams**.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://projeto-loterias.streamlit.app/)
+        <div class="badges">
+            <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" alt="Python">
+            <img src="https://img.shields.io/badge/Streamlit-1.0%2B-orange?logo=streamlit&logoColor=white" alt="Streamlit">
+            <img src="https://img.shields.io/badge/Deployed%20on-Streamlit-brightgreen?logo=streamlit&logoColor=white" alt="Streamlit">
+        </div>
 
 ## 📊 Funcionalidades
 
